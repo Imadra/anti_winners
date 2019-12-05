@@ -103,10 +103,15 @@ class Distribute(APIView):
             # logg(reserved_auditories, "reserved")
             # logg(available_auditories, "avail")
 
-            edge_weights = [[to_book[i].calculate_edge_with(available_auditories[j]) for j in range(len(available_auditories))] for i in range(len(to_book))]
-            logg(edge_weights, "edge weights")
-            logg([[(to_book[i].id, available_auditories[j].id) for j in range(len(available_auditories))] for i in range(len(to_book))], "index")
-            for weight in range(1, 11):
+            # to_reserve = {}
+
+            for weight in range(10, 0, -1):
+                edge_weights = [
+                    [to_book[i].calculate_edge_with(available_auditories[j]) for j in range(len(available_auditories))]
+                    for i in range(len(to_book))]
+                logg(edge_weights, "edge weights")
+                logg([[(to_book[i].id, available_auditories[j].id) for j in range(len(available_auditories))] for i in
+                      range(len(to_book))], "index")
                 g = []
                 for i in range(len(to_book)):
                     g.append([])
@@ -117,9 +122,11 @@ class Distribute(APIView):
                 logg(filtered_edges, "filtered edges")
 
                 new_available_auditories = []
+                new_to_book = []
                 for i, j in filtered_edges:
                     to_book[i].set_auditory(available_auditories[j])
                     reserved_auditories.append((to_book[i].time_till, available_auditories[j]))
+                    # to_reserve[available_auditories[j]] = to_book[i].time_till
                 for t in range(len(available_auditories)):
                     p = 1
                     for i, j in filtered_edges:
@@ -128,13 +135,44 @@ class Distribute(APIView):
                             break
                     if p == 1:
                         new_available_auditories.append(available_auditories[t])
+
+                for t in range(len(to_book)):
+                    p = 1
+                    for i, j in filtered_edges:
+                        if t == i:
+                            p = 0
+                            break
+                    if p == 1:
+                        new_to_book.append(to_book[t])
                 available_auditories = new_available_auditories
+                to_book = new_to_book
+
+            # for key in to_reserve:
+            #     reserved_auditories.append((to_reserve[key], key))
+
         return Response(status=status.HTTP_200_OK, data="OK")
 
-@permission_classes([])#IsAuthenticated])
+@permission_classes([IsAuthenticated])
+class GetNewReqs(APIView):
+    def get(self, request):
+        bookings = Booking.objects.filter(time_from__gt=datetime.now(), auditory__isnull=True).order_by('time_from')
+        res = []
+        for booking in bookings:
+            res.append({
+                'id': booking.id,
+                'start_time': booking.time_from,
+                'end_time': booking.time_till,
+                'title': booking.title
+            })
+
+        return Response(status=status.HTTP_200_OK, data=res)
+
+
+@permission_classes([IsAuthenticated])
 class GetReservations(APIView):
     def get(self, request):
-        bookings = Booking.objects.select_related('auditory').filter(time_from__gt=datetime.now()).order_by('time_from')
+        bookings = Booking.objects.filter(time_from__gt=datetime.now(), auditory__isnull=False).order_by(
+            'time_from')
         res = {
             'items': [],
             'groups': [],
@@ -147,9 +185,11 @@ class GetReservations(APIView):
                 'end_time': booking.time_till,
                 'title': booking.title
             })
+        rooms = Auditory.objects.all()
+        for room in rooms:
             res['groups'].append({
-                'id': booking.auditory_id,
-                'title': booking.auditory.room_number
+                'id': room.id,
+                'title': str(room.id) + ": " + room.room_number
             })
         # # ans_bookings = BookingSerializer(Booking.objects.all(), many=True).data
         # ans_bookings = []

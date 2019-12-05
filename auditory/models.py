@@ -35,6 +35,15 @@ class Auditory(models.Model):
     def __str__(self):
         return str(self.id)
 
+    def __hash__(self):
+        return int(self.id)
+
+    def __eq__(self, other):
+        return other.id == self.id
+
+    def __cmp__(self, other):
+        return self.id > other.id
+
 
 class Booking(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -127,3 +136,15 @@ class Booking(models.Model):
         return {
             ''
         }
+
+    def __str__(self):
+        return str(self.id)
+
+    def __hash__(self):
+        return int(self.id)
+
+    def __eq__(self, other):
+        return other.id == self.id
+
+    def __cmp__(self, other):
+        return self.id > other.id
