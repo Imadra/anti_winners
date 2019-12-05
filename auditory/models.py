@@ -1,30 +1,34 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
-# class CriteriaCategory(models.Model):
-#     name = models.CharField(max_length=40)
-#     possible_values = models.CharField(max_length=500)
-#     coef = models.FloatField(null=True)
-#
-#
-# class CriteriaNumber(models.Model):
-#     coef = models.FloatField(null=True)
+
+def calc_bool_coef(aviable, req, coef):
+    if not coef:
+        return 0
+    if req is None or req == aviable:
+        return coef
+    return 0
+
+
+def calc_num_coef(aviable, req, coef):
+    if not coef:
+        return 0
+    if not req:
+        return coef
+    return min(aviable/req, 1.0) * coef
 
 
 class Auditory(models.Model):
     capacity = models.IntegerField(null=True)
-    # criteria = models.ManyToManyField()
-    has_projector = models.BooleanField()
-    has_whiteboard = models.BooleanField()
-    volume = models.IntegerField(null=True)
-    has_air_conditioning = models.BooleanField()
-    has_noise_isolation = models.BooleanField()
-    computer_count = models.IntegerField()
-    micro_count = models.IntegerField()
-    has_internet = models.BooleanField()
-    has_speakers = models.BooleanField()
-    color = models.CharField(max_length=20)
+    has_projector = models.BooleanField(default=False)
+    has_whiteboard = models.BooleanField(default=False)
+    volume = models.IntegerField(null=True, default=0)
+    has_air_conditioning = models.BooleanField(default=False)
+    has_noise_isolation = models.BooleanField(default=False)
+    computer_count = models.IntegerField(default=0)
+    micro_count = models.IntegerField(default=0)
+    has_internet = models.BooleanField(default=False)
+    has_speakers = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.id)
@@ -35,30 +39,83 @@ class Booking(models.Model):
     time_from = models.DateTimeField()
     time_till = models.DateTimeField()
 
-    has_projector = models.BooleanField()
-    has_whiteboard = models.BooleanField()
-    volume = models.IntegerField(null=True)
-    has_air_conditioning = models.BooleanField()
-    has_noise_isolation = models.BooleanField()
-    computer_count = models.IntegerField()
-    micro_count = models.IntegerField()
-    has_internet = models.BooleanField()
-    has_speakers = models.BooleanField()
-    color = models.CharField(max_length=20)
+    capacity = models.IntegerField(null=True, blank=True)
+    computer_count = models.IntegerField(null=True, blank=True)
+    micro_count = models.IntegerField(null=True, blank=True)
+    has_projector = models.BooleanField(null=True, blank=True)
+    has_whiteboard = models.BooleanField(null=True, blank=True)
+    volume = models.IntegerField(null=True, blank=True)
+    has_air_conditioning = models.BooleanField(null=True, blank=True)
+    has_noise_isolation = models.BooleanField(null=True, blank=True)
+    has_internet = models.BooleanField(null=True, blank=True)
+    has_speakers = models.BooleanField(null=True, blank=True)
 
-    has_projector_coef = models.FloatField()
-    has_whiteboard_coef = models.FloatField()
-    volume_coef = models.FloatField()
-    has_air_conditioning_coef = models.FloatField()
-    has_noise_isolation_coef = models.FloatField()
-    computer_count_coef = models.FloatField()
-    micro_count_coef = models.FloatField()
-    has_internet_coef = models.FloatField()
-    has_speakers_coef = models.FloatField()
-    color_coef = models.FloatField(max_length=20)
+    capacity_coef = models.FloatField(null=True, blank=True)
+    has_projector_coef = models.FloatField(null=True, blank=True)
+    has_whiteboard_coef = models.FloatField(null=True, blank=True)
+    volume_coef = models.FloatField(null=True, blank=True)
+    has_air_conditioning_coef = models.FloatField(null=True, blank=True)
+    has_noise_isolation_coef = models.FloatField(null=True, blank=True)
+    computer_count_coef = models.FloatField(null=True, blank=True)
+    micro_count_coef = models.FloatField(null=True, blank=True)
+    has_internet_coef = models.FloatField(null=True, blank=True)
+    has_speakers_coef = models.FloatField(null=True, blank=True)
 
+    auditory = models.ForeignKey(Auditory, on_delete=models.CASCADE, null=True, blank=True)
+    edge_weight = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return str(self.id)
 
-    # def calculate(self):
+    def calculate_edge_with(self, auditory):
+        res = 0
+        div = 0
+
+        res += calc_num_coef(auditory.capacity, self.capacity, self.capacity_coef)
+        if self.capacity_coef:
+            div += self.capacity_coef
+
+        res += calc_num_coef(auditory.computer_count, self.computer_count, self.computer_count_coef)
+        if self.computer_count_coef:
+            div += self.computer_count_coef
+
+        res += calc_bool_coef(auditory.micro_count, self.micro_count, self.micro_count_coef)
+        if self.micro_count_coef:
+            div += self.micro_count_coef
+
+        res += calc_bool_coef(auditory.has_projector, self.has_projector, self.has_projector_coef)
+        if self.has_projector_coef:
+            div += self.has_projector_coef
+
+        res += calc_bool_coef(auditory.has_whiteboard, self.has_whiteboard, self.has_whiteboard_coef)
+        if self.has_whiteboard_coef:
+            div += self.has_whiteboard_coef
+
+        res += calc_bool_coef(auditory.volume, self.volume, self.volume_coef)
+        if self.volume_coef:
+            div += self.volume_coef
+
+        res += calc_bool_coef(auditory.has_air_conditioning, self.has_air_conditioning, self.has_air_conditioning_coef)
+        if self.has_air_conditioning_coef:
+            div += self.has_air_conditioning_coef
+
+        res += calc_bool_coef(auditory.has_noise_isolation, self.has_noise_isolation, self.has_noise_isolation_coef)
+        if self.has_noise_isolation_coef:
+            div += self.has_noise_isolation_coef
+
+        res += calc_bool_coef(auditory.has_internet, self.has_internet, self.has_internet_coef)
+        if self.has_internet_coef:
+            div += self.has_internet_coef
+
+        res += calc_bool_coef(auditory.has_speakers, self.has_speakers, self.has_speakers_coef)
+        if self.has_speakers_coef:
+            div += self.has_speakers_coef
+        if div == 0:
+            return 1
+        res /= div
+        return res
+
+    def set_auditory(self, auditory):
+        self.auditory = auditory
+        self.edge_weight = self.calculate_edge_with(self.auditory)
+        self.save()

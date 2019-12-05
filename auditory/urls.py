@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import Ping# , Register, CheckToken, login
+from .views import AddAuditory, Distribute
 
 urlpatterns = [
-    path('ping/', Ping.as_view()),
+    path('add_auditory/', AddAuditory.as_view()),
+    path('distribute/', Distribute.as_view()),
 ]
