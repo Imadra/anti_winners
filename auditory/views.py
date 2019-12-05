@@ -43,12 +43,19 @@ def kuhn(n, k, g):
     return ans
 
 
-@permission_classes([IsAuthenticated])
+@permission_classes([])#IsAuthenticated])
 class AddAuditory(APIView):
     def post(self, request):
         print(request.data)
         Auditory.objects.create(**request.data)
-        return Response(status=status.HTTP_200_OK, data="Codeforces red")
+        return Response(status=status.HTTP_200_OK, data="Codeforces red auditory")
+
+@permission_classes([])  # IsAuthenticated])
+class AddBooking(APIView):
+    def post(self, request):
+        print(request.data)
+        Booking.objects.create(**request.data)
+        return Response(status=status.HTTP_200_OK, data="Codeforces red booking")
 
 
 def logg(data, text):
