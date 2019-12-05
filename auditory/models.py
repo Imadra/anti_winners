@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import datetime
 
 
 def calc_bool_coef(aviable, req, coef):
@@ -29,6 +30,7 @@ class Auditory(models.Model):
     micro_count = models.IntegerField(default=0)
     has_internet = models.BooleanField(default=False)
     has_speakers = models.BooleanField(default=False)
+    room_number = models.CharField(max_length=20, default="No title", unique=True)
 
     def __str__(self):
         return str(self.id)
@@ -36,8 +38,9 @@ class Auditory(models.Model):
 
 class Booking(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    time_from = models.DateTimeField()
-    time_till = models.DateTimeField()
+    time_from = models.DateTimeField(default=datetime.now)
+    time_till = models.DateTimeField(default=datetime.now)
+    title = models.CharField(max_length=50, default="conduct hackathon")
 
     capacity = models.IntegerField(null=True, blank=True)
     computer_count = models.IntegerField(null=True, blank=True)
@@ -119,3 +122,8 @@ class Booking(models.Model):
         self.auditory = auditory
         self.edge_weight = self.calculate_edge_with(self.auditory)
         self.save()
+
+    def to_external(self):
+        return {
+            ''
+        }
